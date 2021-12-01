@@ -1,6 +1,7 @@
 package com.magenic.masters.payment;
 
 public class CreditCard extends PaymentMethod {
+
     @Override
     protected String getAccountDetails() {
         return """

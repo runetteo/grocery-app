@@ -1,5 +1,7 @@
 package com.magenic.masters.item;
 
+import java.util.stream.Stream;
+
 public enum Category {
 
     PANTRY("Pantry"),
@@ -13,5 +15,12 @@ public enum Category {
 
     public String getDescription() {
         return description;
+    }
+
+    public static Category getByDescription(String description) {
+        return Stream.of(Category.values())
+                .filter(category -> category.getDescription().equals(description))
+                .findFirst()
+                .orElse(null);
     }
 }

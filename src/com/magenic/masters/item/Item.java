@@ -7,7 +7,7 @@ public class Item {
     private double price;
     private Category category;
 
-    public Item(String name, String unit, double price, Category category) {
+    public Item(String name, double price, String unit, Category category) {
         this.name = name;
         this.unit = unit;
         this.price = price;
@@ -44,5 +44,15 @@ public class Item {
 
     public void setCategory(Category category) {
         this.category = category;
+    }
+
+    @Override
+    public String toString() {
+        return "Item{" +
+                "name='" + name + '\'' +
+                ", unit='" + unit + '\'' +
+                ", price=" + price +
+                ", category=" + category +
+                '}';
     }
 }
