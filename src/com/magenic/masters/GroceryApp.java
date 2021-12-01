@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
@@ -23,19 +25,23 @@ public class GroceryApp {
                     2 - Meat/Poultry/Seafood
                     3 - Snacks
                     
-                Choose Category(-1 to Checkout, -2 to Exit):
-                """;
+                Choose Category(-1 to Checkout, -2 to Exit):""";
 
-    private static final String ITEM_FORMAT = "[%d]%s %10s/%s";
+    private static final String ITEM_FORMAT = "[%1d]%1s         price: %s/%s";
+    private static final String FILE_DIR = "resources/";
+    private static final String FILENAME = "stocks.csv";
 
     private Scanner scanner;
     private List<Item> itemsInCart;
     private List<Item> items;
+    private NumberFormat priceFrmtter;
 
     public GroceryApp(List<Item> items) {
         this.items = items;
         this.scanner = new Scanner(System.in);
         this.itemsInCart = new ArrayList<>();
+
+        this.priceFrmtter = new DecimalFormat("#0.00");
     }
 
     private int getValidIntInput(String message) {
@@ -44,30 +50,30 @@ public class GroceryApp {
         do {
             try {
                 System.out.print(message);
-                userInput = input.nextInt();
+                userInput = scanner.nextInt();
                 isValid = true;
             } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a valid number.\n");
+                System.out.println("Invalid input. Please enter a valid number.");
             }
-            input.nextLine();
+            scanner.nextLine();
         } while (!isValid);
 
         return userInput;
     }
 
     private void displayMainMenu() {
-        int choice = getValidIntInput(MAIN_MENU)
+        int choice = getValidIntInput(MAIN_MENU);
         switch (choice) {
             case 1 -> {
-                System.out.println("Pantry Items:");
+                System.out.println("\nPantry Items:");
                 displayItems(Category.PANTRY);
             }
             case 2 -> {
-                System.out.println("Meat/Poultry/Seafood Items:");
+                System.out.println("\nMeat/Poultry/Seafood Items:");
                 displayItems(Category.MPS);
             }
             case 3 -> {
-                System.out.println("Snack Items:");
+                System.out.println("\nSnack Items:");
                 displayItems(Category.SNACKS);
             }
             case -1 -> System.out.println("checkout");
@@ -86,18 +92,19 @@ public class GroceryApp {
         items.stream()
                 .filter(item -> item.getCategory() == category)
                 .forEach(item -> {
-                    System.out.println(ITEM_FORMAT.formatted(id.getAndIncrement(), item.getName(), item.getPrice(), item.getUnit()));
+                    System.out.println(ITEM_FORMAT.formatted(
+                            id.getAndIncrement(),
+                            item.getName(),
+                            priceFrmtter.format(item.getPrice()),
+                            item.getUnit()));
                 });
     }
 
     public static void main(String[] args) {
 
-        NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-        formatter.setMinimumFractionDigits(2);
-
         List<Item> items = new ArrayList<>();
         try {
-            Path filepath = Paths.get("C:/Users/RunetteO/workspace/stocks.csv");
+            Path filepath = Paths.get(FILE_DIR + FILENAME);
             String content = Files.readString(filepath);
 
             content.lines().filter(Predicate.not(String::isBlank)).forEach((var line) -> {
