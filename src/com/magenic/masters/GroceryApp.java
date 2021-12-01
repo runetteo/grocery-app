@@ -27,7 +27,7 @@ public class GroceryApp {
                     
                 Choose Category(-1 to Checkout, -2 to Exit):""";
 
-    private static final String ITEM_FORMAT = "[%1d]%1s         price: %s/%s";
+    private static final String ITEM_FORMAT = "[%d]%-55s price: %s/%s";
     private static final String FILE_DIR = "resources/";
     private static final String FILENAME = "stocks.csv";
 
