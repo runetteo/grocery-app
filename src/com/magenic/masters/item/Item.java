@@ -5,9 +5,11 @@ public class Item {
     private String name;
     private String unit;
     private double price;
+    private double totalAmount;
+	private int totalItemsInCart;
     private Category category;
 
-    public Item(String name, double price, String unit, Category category) {
+	public Item(String name, double price, String unit, Category category) {
         this.name = name;
         this.unit = unit;
         this.price = price;
@@ -45,6 +47,23 @@ public class Item {
     public void setCategory(Category category) {
         this.category = category;
     }
+    
+    public double getTotalAmount() {
+		return totalAmount;
+	}
+
+	public double setTotalAmount(double totalAmount) {
+		this.totalAmount = totalAmount;
+		return totalAmount;
+	}
+
+	public int getTotalItemsInCart() {
+		return totalItemsInCart;
+	}
+
+	public void setTotalItemsInCart(int totalItemsInCart) {
+		this.totalItemsInCart = totalItemsInCart;
+	}
 
     @Override
     public String toString() {
