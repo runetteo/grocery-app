@@ -164,6 +164,7 @@ public class GroceryApp {
             quantity = getValidDoubleInput(ITEM_QTY_KG);
             totalAmount = quantity * item.getPrice();
             item.setTotalItemsInCart(quantity);
+            item.setTotalAmount(totalAmount);
             itemsInCart.add(item);
         }
 
@@ -191,7 +192,7 @@ public class GroceryApp {
 
         System.out.println("Current cart contents:");
         String cartContent = itemsInCart.stream().collect(Collectors.teeing(
-                Collectors.summingDouble(n -> n.getPrice()),
+                Collectors.summingDouble(n -> n.getUnit().equals("kg") ? n.getTotalAmount() : n.getPrice()),
                 Collectors.counting(),
                 (sum, count) -> contents.formatted(sum, fmt.format(sum), count)));
 
