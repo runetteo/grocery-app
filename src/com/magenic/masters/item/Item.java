@@ -2,18 +2,28 @@ package com.magenic.masters.item;
 
 public class Item {
 
+    private int id;
     private String name;
     private String unit;
     private double price;
     private double totalAmount;
-	private int totalItemsInCart;
+	private double totalItemsInCart;
     private Category category;
 
-	public Item(String name, double price, String unit, Category category) {
+	public Item(int id, String name, double price, String unit, Category category) {
+        this.id = id;
         this.name = name;
         this.unit = unit;
         this.price = price;
         this.category = category;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -57,18 +67,19 @@ public class Item {
 		return totalAmount;
 	}
 
-	public int getTotalItemsInCart() {
+	public double getTotalItemsInCart() {
 		return totalItemsInCart;
 	}
 
-	public void setTotalItemsInCart(int totalItemsInCart) {
+	public void setTotalItemsInCart(double totalItemsInCart) {
 		this.totalItemsInCart = totalItemsInCart;
 	}
 
     @Override
     public String toString() {
         return "Item{" +
-                "name='" + name + '\'' +
+                "id=" + id +
+                ", name='" + name + '\'' +
                 ", unit='" + unit + '\'' +
                 ", price=" + price +
                 ", category=" + category +

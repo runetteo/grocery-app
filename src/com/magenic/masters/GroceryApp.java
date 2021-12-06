@@ -10,15 +10,17 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GroceryApp {
 
@@ -34,21 +36,23 @@ public class GroceryApp {
             \nChoose item (-1 to go back to Categories):""";
     
     private static final String ITEM_QTY = """
-    		\nEnter how many:""";
+            Enter how many:""";
+
+    private static final String ITEM_QTY_KG = "Enter how much(in kg):";
     
     private static final String ITEM_FORMAT = "[%d]%-55s price: %s/%s";
-    private static final String CART_ITEM_FORMAT = "\nItem added: %s | %s/%s x %s | %s \nCurrent cart contents:\n";
+    private static final String CART_ITEM_FORMAT = "%s | %s/%s x %s | %s";
     private static final String FILE_DIR = "resources/";
     private static final String FILENAME = "stocks.csv";
-    private int i = 0;
 
     private Scanner scanner;
     private List<Item> itemsInCart;
-    private List<Item> items;
+    private List<Item> allItems;
+    private List<Item> itemsInCategory;
     private NumberFormat priceFrmtter;
 
     public GroceryApp(List<Item> items) {
-        this.items = items;
+        this.allItems = items;
         this.scanner = new Scanner(System.in);
         this.itemsInCart = new ArrayList<>();
 
@@ -72,27 +76,42 @@ public class GroceryApp {
         return userInput;
     }
 
+    private double getValidDoubleInput(String message) {
+        double userInput = 0;
+        boolean isValid = false;
+        do {
+            try {
+                System.out.print(message);
+                userInput = scanner.nextDouble();
+                isValid = true;
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+            scanner.nextLine();
+        } while (!isValid);
+
+        return userInput;
+    }
+
     private void displayMainMenu() {
         int choice = getValidIntInput(MAIN_MENU);
         switch (choice) {
             case 1 -> {
                 System.out.println("\nPantry Items:");
                 displayItems(Category.PANTRY);
-                displayCart();
             }
             case 2 -> {
                 System.out.println("\nMeat/Poultry/Seafood Items:");
                 displayItems(Category.MPS);
-                displayCart();
             }
             case 3 -> {
                 System.out.println("\nSnack Items:");
                 displayItems(Category.SNACKS);
-                displayCart();
             }
-            case -1 -> System.out.println("checkout");
+            case -1 -> checkout();
             case -2 -> {
                 System.out.println("Unsupported option: Program Exiting now...");
+                System.exit(0);
             }
             default -> {
                 System.out.println("Invalid input. Try again.");
@@ -103,41 +122,27 @@ public class GroceryApp {
 
     private void displayItems(Category category) {
         AtomicInteger id = new AtomicInteger();
-        items.stream()
+        itemsInCategory =  allItems.stream()
                 .filter(item -> item.getCategory() == category)
+                .collect(Collectors.toList());
+
+        itemsInCategory.stream()
                 .forEach(item -> {
                     System.out.println(ITEM_FORMAT.formatted(
                             id.getAndIncrement(),
                             item.getName(),
                             priceFrmtter.format(item.getPrice()),
                             item.getUnit()));
-                    item.setTotalAmount(0);
-                    item.setTotalItemsInCart(0);
                 });
+
+        displayCart();
     }
     
     private void displayCart() {
         int choice = getValidIntInput(ITEM_CART);
         switch (choice) {
-            case 0 -> {
-            	addToCart(choice);
-            }
-            case 1 -> {
-            	addToCart(choice);
-            }
-            case 2 -> {
-            	addToCart(choice);
-            }
-            case 3 -> {
-            	addToCart(choice);
-            }
-            case 4 -> {
-            	addToCart(choice);
-            }
-            case -1 -> {
-            	i = 0;
-            	displayMainMenu();
-            }
+            case 0, 1, 2, 3, 4 -> addToCart(itemsInCategory.get(choice));
+            case -1 -> displayMainMenu();
             default -> {
                 System.out.println("Invalid input. Try again.");
                 displayMainMenu();
@@ -145,55 +150,88 @@ public class GroceryApp {
         }
     }
     
-    private void addToCart(int item) {
-    	int quantity = getValidIntInput(ITEM_QTY);
-    	itemsInCart.add(items.get(item));
+    private void addToCart(Item item) {
+        double totalAmount;
+        double quantity;
 
-    	if (itemsInCart.size() != 0) {
-    		getCart(quantity, item);
-    	}
+        if (!item.getUnit().equals("kg")) {
+            quantity = getValidIntInput(ITEM_QTY);
+            totalAmount = quantity * item.getPrice();
+            for (int i=0; i<quantity; i++) {
+                itemsInCart.add(item);
+            }
+        } else {
+            quantity = getValidDoubleInput(ITEM_QTY_KG);
+            totalAmount = quantity * item.getPrice();
+            item.setTotalItemsInCart(quantity);
+            itemsInCart.add(item);
+        }
+
+        System.out.print("\nItem added: ");
+        System.out.println(CART_ITEM_FORMAT.formatted(
+                item.getName(),
+                priceFrmtter.format(item.getPrice()),
+                item.getUnit(),
+                quantity,
+                totalAmount
+        ));
+
+        displayCurrentCart(item);
     }
     
-    private void getCart(int quantity, int item) {
-    	double price = items.get(item).getPrice();
-    	double totalAmount = price*quantity;
+    private void displayCurrentCart(Item item) {
+        NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
+        fmt.setMinimumFractionDigits(3);
 
-    	System.out.println(CART_ITEM_FORMAT.formatted(
-    			items.get(item).getName(),
-    			priceFrmtter.format(price),
-    			items.get(item).getUnit(),
-    			quantity,
-    			items.get(item).setTotalAmount(totalAmount)
-    			));
-    	
-    	displayCurrentCart(item);
-    }
-    
-    private void displayCurrentCart(int item) {
-    	Map<String, Object> currentCart = Stream.of(itemsInCart).collect(
-				Collectors.teeing(
-						Collectors.summingDouble(n -> items.get(item).getTotalAmount()),
-						Collectors.counting(),
-						(sum, count) ->  Map.ofEntries(
-								Map.entry("totalAmount", sum),
-								Map.entry("countAmount", count)
-								)
-						));
-    	
-    	NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-		fmt.setMinimumFractionDigits(3);
-
-		String contents = """
-				Total amount: %s,
+        String contents = """
+				Total amount: %f,
 				Total amount compact: %s,
-				Number of Items: %s
+				Number of Items: %d
 				""";
 
-		String cartContent = contents.formatted(currentCart.get("totalAmount"), fmt.format(currentCart.get("totalAmount")), currentCart.get("countAmount")).trim();
-		System.out.println(cartContent);
+        System.out.println("Current cart contents:");
+        String cartContent = itemsInCart.stream().collect(Collectors.teeing(
+                Collectors.summingDouble(n -> n.getPrice()),
+                Collectors.counting(),
+                (sum, count) -> contents.formatted(sum, fmt.format(sum), count)));
+
+        System.out.println(cartContent);
+
+
+        Map<Integer, Item> uniqueItems = new HashMap<>();
+        for (Item i : itemsInCart) {
+            if (uniqueItems.get(i.getId()) == null) {
+                i.setTotalItemsInCart(i.getUnit().equals("kg") ? i.getTotalItemsInCart() : 1);
+                i.setTotalAmount(i.getTotalItemsInCart() * i.getPrice());
+            } else {
+                Item addedItem = uniqueItems.get(i.getId());
+                if (addedItem.getUnit().equals("kg")) {
+                    addedItem.setTotalItemsInCart(addedItem.getTotalItemsInCart() + i.getTotalItemsInCart());
+                } else {
+                    addedItem.setTotalItemsInCart(addedItem.getTotalItemsInCart() + 1);
+                }
+
+                addedItem.setTotalAmount(addedItem.getTotalItemsInCart() * addedItem.getPrice());
+            }
+
+            uniqueItems.put(i.getId(), i);
+
+        }
+
+        uniqueItems.values().forEach((var i) -> {
+            System.out.println(CART_ITEM_FORMAT.formatted(i.getName(), i.getPrice(), i.getUnit(), i.getTotalItemsInCart(), i.getTotalAmount()));
+        });
+
 		displayCart();
     }
-    
+
+    private void checkout() {
+        System.out.println("checkout");
+
+        //reset
+        itemsInCart = new ArrayList<>();
+        itemsInCategory = new ArrayList<>();
+    }
 
     public static void main(String[] args) {
 
@@ -202,9 +240,10 @@ public class GroceryApp {
             Path filepath = Paths.get(FILE_DIR + FILENAME);
             String content = Files.readString(filepath);
 
+            AtomicInteger id = new AtomicInteger();
             content.lines().filter(Predicate.not(String::isBlank)).forEach((var line) -> {
                 String[] details = line.split(",");
-                Item item = new Item(details[0], Double.valueOf(details[1]), details[2], Category.getByDescription(details[3])); //validation?
+                Item item = new Item(id.getAndIncrement(), details[0], Double.valueOf(details[1]), details[2], Category.getByDescription(details[3])); //validation?
                 items.add(item);
             });
 
