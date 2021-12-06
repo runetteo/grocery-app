@@ -2,11 +2,16 @@ package com.magenic.masters;
 
 import com.magenic.masters.item.Category;
 import com.magenic.masters.item.Item;
+import com.magenic.masters.payment.Bank;
+import com.magenic.masters.payment.CreditCard;
+import com.magenic.masters.payment.Gcash;
+import com.magenic.masters.payment.PaymentMethod;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -29,7 +34,15 @@ public class GroceryApp {
                     3 - Snacks
                     
                 Choose Category(-1 to Checkout, -2 to Exit):""";
-    
+
+    private static final String PAYMENT_OPTIONS_MENU = """
+                Choose payment method: 
+                1 - Savings
+                2 - Checking
+                3 - Credit Card
+                4 - GCASH 
+                """;
+
     private static final String ITEM_CART = """
             \nChoose item (-1 to go back to Categories):""";
     
@@ -48,6 +61,9 @@ public class GroceryApp {
     private List<Item> allItems;
     private List<Item> itemsInCategory;
     private NumberFormat priceFrmtter;
+
+    private int totalItemsInCart;
+    private double totalAmount;
 
     public GroceryApp(List<Item> items) {
         this.allItems = items;
@@ -181,7 +197,7 @@ public class GroceryApp {
     private void displayCurrentCart(boolean isCheckingOut) {
     	NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
 		fmt.setMinimumFractionDigits(3);
-        
+
         String summary = """
 				Total amount: %s,
 				Total amount compact: %s,
@@ -190,16 +206,18 @@ public class GroceryApp {
 
         System.out.println("Current cart contents:");
         if (!isCheckingOut) {
-        	Map<String, Object> content = itemsInCart.stream().collect(Collectors.teeing(
+            Map<String, Object> content = itemsInCart.stream().collect(Collectors.teeing(
                     Collectors.summingDouble(n -> n.getUnit().equals("kg") ? n.getTotalAmount() : n.getPrice()),
                     Collectors.counting(),
                     (sum, count) ->  Map.ofEntries(
-							Map.entry("totalAmount", sum),
-							Map.entry("countAmount", count)
-							)));
-        	
-        	
-        	String cartContent = summary.formatted(content.get("totalAmount"), fmt.format(content.get("totalAmount")), content.get("countAmount")).trim();
+                            Map.entry("totalAmount", sum),
+                            Map.entry("countAmount", count)
+                    )));
+
+            totalItemsInCart = Integer.valueOf(String.valueOf(content.get("countAmount")));
+            totalAmount = Double.valueOf(String.valueOf(content.get("totalAmount")));
+
+            String cartContent = summary.formatted(content.get("totalAmount"), fmt.format(content.get("totalAmount")), content.get("countAmount")).trim();
             System.out.println(cartContent);
         }
 
@@ -215,7 +233,6 @@ public class GroceryApp {
                 } else {
                     addedItem.setTotalItemsInCart(addedItem.getTotalItemsInCart() + 1);
                 }
-
                 addedItem.setTotalAmount(addedItem.getTotalItemsInCart() * addedItem.getPrice());
             }
 
@@ -232,16 +249,43 @@ public class GroceryApp {
         }
     }
 
+    private void displayAndSaveReceipt() {
+        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+        switch (choice) {
+            case 1, 2 -> saveReceipt(new Bank());
+            case 3 -> saveReceipt(new CreditCard());
+            case 4 -> saveReceipt(new Gcash());
+            default ->  displayAndSaveReceipt();
+        };
+    }
+
+    private void saveReceipt(PaymentMethod paymentMethod) {
+        String paymentDetails = paymentMethod.getPaymentDetails(totalAmount, totalItemsInCart);
+
+        System.out.println("""
+                Thank you for your payment.
+                Payment Details:
+                """);
+        System.out.print(paymentDetails.stripLeading());
+
+        Path filePath = Paths.get(FILE_DIR + paymentMethod.getFileName());
+        try {
+            Files.writeString(filePath, paymentDetails, StandardOpenOption.CREATE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void checkout() {
         if (itemsInCart.isEmpty()) {
             System.out.println("Cart is empty, nothing to checkout.");
         } else {
             displayCurrentCart(true);
-            //
+            displayAndSaveReceipt();
             itemsInCart = new ArrayList<>();
         }
 
-        //displayMainMenu();
+        displayMainMenu();
     }
 
     public static void main(String[] args) {

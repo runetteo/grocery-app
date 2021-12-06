@@ -1,17 +1,18 @@
 package com.magenic.masters.payment;
 
-public class Gcash extends PaymentMethod {
+public class Bank extends PaymentMethod{
 
     @Override
     public String getFileName() {
-        return "receipt_gcash.txt";
+        return "receipt_bank.txt";
     }
 
     @Override
     protected String getAccountDetails() {
         return """
-            Subscriber name: David Beckham
-            Mobile number: 09171234567
+            Account name: David Beckham
+            Account number: 005412345678
+            Bank name: BDO
             """;
     }
 }

@@ -7,36 +7,25 @@ import java.util.stream.Stream;
 
 public abstract class PaymentMethod {
 
+    public abstract String getFileName();
     protected abstract String getAccountDetails();
 
-    public String getPaymentDetails() {
+    public String getPaymentDetails(double totalAmount, int totalItemsInCart) {
 
         NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
         formatter.setMinimumFractionDigits(3);
 
-        String amountFormat = """
-                "totalPayableAsString":
-                 {
-                    "totalAmount": %f,
-                    "totalAmount compact: %s,
-                    "number of items": %d
-                 }                  
-                """;
-        String totalPayable = Stream.of(100, 1000, 100000, 1000000).collect(Collectors.teeing(
-                Collectors.summingDouble(i -> i),
-                Collectors.counting(),
-                (sum, count) -> amountFormat.formatted(sum, formatter.format(sum), count)));
-
-        String result = """
-                {
-                 %s
-                 %s
-                }
+        String paymentDetails = """
+                %s
+                Total amount due:
+                Total amount: %f
+                Total amount compact: %s
+                Number of items: %d                 
                 """;
 
-        return result.formatted(
+        return paymentDetails.formatted(
                 getAccountDetails().stripTrailing(),
-                totalPayable.stripTrailing());
+                totalAmount, formatter.format(totalAmount), totalItemsInCart);
     }
 
 }
