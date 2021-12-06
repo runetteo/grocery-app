@@ -11,13 +11,11 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -177,27 +175,28 @@ public class GroceryApp {
                 totalAmount
         ));
 
-        displayCurrentCart(item);
+        displayCurrentCart(false);
     }
     
-    private void displayCurrentCart(Item item) {
+    private void displayCurrentCart(boolean isCheckingOut) {
         NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
         fmt.setMinimumFractionDigits(3);
 
-        String contents = """
+        String summary = """
 				Total amount: %f,
 				Total amount compact: %s,
 				Number of Items: %d
 				""";
 
         System.out.println("Current cart contents:");
-        String cartContent = itemsInCart.stream().collect(Collectors.teeing(
-                Collectors.summingDouble(n -> n.getUnit().equals("kg") ? n.getTotalAmount() : n.getPrice()),
-                Collectors.counting(),
-                (sum, count) -> contents.formatted(sum, fmt.format(sum), count)));
+        if (!isCheckingOut) {
+            String cartContent = itemsInCart.stream().collect(Collectors.teeing(
+                    Collectors.summingDouble(n -> n.getUnit().equals("kg") ? n.getTotalAmount() : n.getPrice()),
+                    Collectors.counting(),
+                    (sum, count) -> summary.formatted(sum, fmt.format(sum), count)));
 
-        System.out.println(cartContent);
-
+            System.out.println(cartContent);
+        }
 
         Map<Integer, Item> uniqueItems = new HashMap<>();
         for (Item i : itemsInCart) {
@@ -223,15 +222,21 @@ public class GroceryApp {
             System.out.println(CART_ITEM_FORMAT.formatted(i.getName(), i.getPrice(), i.getUnit(), i.getTotalItemsInCart(), i.getTotalAmount()));
         });
 
-		displayCart();
+        if (!isCheckingOut) {
+            displayCart();
+        }
     }
 
     private void checkout() {
-        System.out.println("checkout");
+        if (itemsInCart.isEmpty()) {
+            System.out.println("Cart is empty, nothing to checkout.");
+        } else {
+            displayCurrentCart(true);
+            //
+            itemsInCart = new ArrayList<>();
+        }
 
-        //reset
-        itemsInCart = new ArrayList<>();
-        itemsInCategory = new ArrayList<>();
+        //displayMainMenu();
     }
 
     public static void main(String[] args) {
