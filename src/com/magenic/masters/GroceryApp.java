@@ -179,22 +179,27 @@ public class GroceryApp {
     }
     
     private void displayCurrentCart(boolean isCheckingOut) {
-        NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-        fmt.setMinimumFractionDigits(3);
-
+    	NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
+		fmt.setMinimumFractionDigits(3);
+        
         String summary = """
-				Total amount: %f,
+				Total amount: %s,
 				Total amount compact: %s,
 				Number of Items: %d
 				""";
 
         System.out.println("Current cart contents:");
         if (!isCheckingOut) {
-            String cartContent = itemsInCart.stream().collect(Collectors.teeing(
+        	Map<String, Object> content = itemsInCart.stream().collect(Collectors.teeing(
                     Collectors.summingDouble(n -> n.getUnit().equals("kg") ? n.getTotalAmount() : n.getPrice()),
                     Collectors.counting(),
-                    (sum, count) -> summary.formatted(sum, fmt.format(sum), count)));
-
+                    (sum, count) ->  Map.ofEntries(
+							Map.entry("totalAmount", sum),
+							Map.entry("countAmount", count)
+							)));
+        	
+        	
+        	String cartContent = summary.formatted(content.get("totalAmount"), fmt.format(content.get("totalAmount")), content.get("countAmount")).trim();
             System.out.println(cartContent);
         }
 
