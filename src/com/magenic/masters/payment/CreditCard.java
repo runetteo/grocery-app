@@ -1,6 +1,6 @@
 package com.magenic.masters.payment;
 
-public class CreditCard extends PaymentMethod {
+public final class CreditCard implements PaymentMethod {
 
     @Override
     public String getFileName() {
@@ -8,7 +8,7 @@ public class CreditCard extends PaymentMethod {
     }
 
     @Override
-    protected String getAccountDetails() {
+	public String getAccountDetails() {
         return """
             Name on card: David Beckham
             Credit card number: 4028123456789012

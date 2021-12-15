@@ -5,27 +5,52 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class PaymentMethod {
+//public abstract class PaymentMethod {
+//
+//    public abstract String getFileName();
+//    protected abstract String getAccountDetails();
+//
+//    public String getPaymentDetails(double totalAmount, int totalItemsInCart) {
+//
+//        NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
+//        formatter.setMinimumFractionDigits(3);
+//
+//        String paymentDetails = """
+//                %s
+//                Total amount due:
+//                Total amount: %f
+//                Total amount compact: %s
+//                Number of items: %d                 
+//                """;
+//
+//        return paymentDetails.formatted(
+//                getAccountDetails().stripTrailing(),
+//                totalAmount, formatter.format(totalAmount), totalItemsInCart);
+//    }
+//
+//}
 
-    public abstract String getFileName();
-    protected abstract String getAccountDetails();
+public sealed interface PaymentMethod permits Bank, CreditCard, Gcash {
 
-    public String getPaymentDetails(double totalAmount, int totalItemsInCart) {
+	public String getAccountDetails();
+	public String getFileName();
 
-        NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-        formatter.setMinimumFractionDigits(3);
+	public default String getPaymentDetails(double totalAmount, int totalItemsInCart) {
 
-        String paymentDetails = """
-                %s
-                Total amount due:
-                Total amount: %f
-                Total amount compact: %s
-                Number of items: %d                 
-                """;
+		NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
+		formatter.setMinimumFractionDigits(3);
 
-        return paymentDetails.formatted(
-                getAccountDetails().stripTrailing(),
-                totalAmount, formatter.format(totalAmount), totalItemsInCart);
-    }
+		String paymentDetails = """
+				%s
+				Total amount due:
+				Total amount: %f
+				Total amount compact: %s
+				Number of items: %d                 
+				""";
 
+		return paymentDetails.formatted(
+				getAccountDetails().stripTrailing(),
+				totalAmount, formatter.format(totalAmount), totalItemsInCart);
+	}
 }
+
