@@ -10,8 +10,7 @@ public class Item {
 	private double totalItemsInCart;
     private Category category;
 
-	public Item(int id, String name, double price, String unit, Category category) {
-        this.id = id;
+	public Item(String name, double price, String unit, Category category) {
         this.name = name;
         this.unit = unit;
         this.price = price;

@@ -1,31 +1,35 @@
 package com.magenic.masters.payment;
 
 public sealed class Bank implements PaymentMethod permits CheckingAccount, SavingsAccount {
-
-//    @Override
-//    protected String getAccountDetails() {
-//        return """
-//            Account name: David Beckham
-//            Account number: 005412345678
-//            Bank name: BDO
-//            """;
-//    }
     
     private String accountName;
     private String accountNumber;
+    private String accountNickname;
+    private String bankName;
 
-    public Bank(String accountName, String accountNumber) {
+    public Bank(String accountName, String accountNumber, String accountNickname) {
+        this(accountName, accountNumber, accountNickname, "BDO");
+    }
+
+    public Bank(String accountName, String accountNumber, String accountNickname, String bankName) {
         this.accountName = accountName;
         this.accountNumber = accountNumber;
+        this.accountNickname = accountNickname;
+        this.bankName = bankName;
     }
 
     @Override
     public String getAccountDetails() {
         String details = """
-				Account Name:\s%s
-				Account Number:\s%s
-				Bank name:\sBDO""";
-        return details.formatted(this.accountName, this.accountNumber);
+                Account nickname:\s%s
+                Account name:\s%s
+                Account number:\s%s
+                Account type:\s%s
+                Bank name:\s%s
+                """;
+
+        String accountType = this instanceof SavingsAccount ? "Savings" : "Checking";
+        return details.formatted(this.accountNickname, this.accountName, this.accountNumber, accountType, this.bankName);
     }
     
     @Override

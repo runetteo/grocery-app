@@ -1,6 +1,6 @@
 package com.magenic.masters.payment;
 
-public record Gcash(String subscriberName, String mobileNumber) implements PaymentMethod {
+public record Gcash(String subscriberName, String mobileNumber, String accountNickname) implements PaymentMethod {
 
     @Override
     public String getFileName() {
@@ -10,8 +10,11 @@ public record Gcash(String subscriberName, String mobileNumber) implements Payme
     @Override
     public String getAccountDetails() {
     	String accountDetails = """
+                Account nickname:\s%s
 				Subscriber name:\s%s
-				Mobile Number:\s%s""";
-        return accountDetails.formatted(subscriberName, mobileNumber);
+				Mobile number:\s%s
+				Account type:\sGcash
+				""";
+        return accountDetails.formatted(accountNickname == null ? "NA" : accountNickname, subscriberName, mobileNumber);
     }
 }

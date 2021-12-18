@@ -1,56 +1,32 @@
 package com.magenic.masters.payment;
 
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//public abstract class PaymentMethod {
-//
-//    public abstract String getFileName();
-//    protected abstract String getAccountDetails();
-//
-//    public String getPaymentDetails(double totalAmount, int totalItemsInCart) {
-//
-//        NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-//        formatter.setMinimumFractionDigits(3);
-//
-//        String paymentDetails = """
-//                %s
-//                Total amount due:
-//                Total amount: %f
-//                Total amount compact: %s
-//                Number of items: %d                 
-//                """;
-//
-//        return paymentDetails.formatted(
-//                getAccountDetails().stripTrailing(),
-//                totalAmount, formatter.format(totalAmount), totalItemsInCart);
-//    }
-//
-//}
+public sealed interface PaymentMethod permits Bank, CreditCard, Gcash, COD {
 
-public sealed interface PaymentMethod permits Bank, CreditCard, Gcash {
+	String getAccountDetails();
+	String getFileName();
 
-	public String getAccountDetails();
-	public String getFileName();
+	default String getPaymentDetails(double totalAmount, int totalItemsInCart) {
 
-	public default String getPaymentDetails(double totalAmount, int totalItemsInCart) {
-
+		NumberFormat priceFrmtter = new DecimalFormat("#0.00");
 		NumberFormat formatter = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
 		formatter.setMinimumFractionDigits(3);
 
 		String paymentDetails = """
-				%s
-				Total amount due:
-				Total amount: %f
+				%s				
+				Total amount: %s
 				Total amount compact: %s
 				Number of items: %d                 
 				""";
 
 		return paymentDetails.formatted(
-				getAccountDetails().stripTrailing(),
-				totalAmount, formatter.format(totalAmount), totalItemsInCart);
+				getAccountDetails().stripIndent(),
+				priceFrmtter.format(totalAmount), formatter.format(totalAmount), totalItemsInCart);
 	}
 }
 

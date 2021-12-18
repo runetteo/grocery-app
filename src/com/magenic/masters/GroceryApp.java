@@ -2,16 +2,15 @@ package com.magenic.masters;
 
 import com.magenic.masters.item.Category;
 import com.magenic.masters.item.Item;
-import com.magenic.masters.payment.Bank;
+import com.magenic.masters.payment.COD;
+import com.magenic.masters.payment.CheckingAccount;
 import com.magenic.masters.payment.CreditCard;
 import com.magenic.masters.payment.Gcash;
 import com.magenic.masters.payment.PaymentMethod;
+import com.magenic.masters.payment.SavingsAccount;
+import com.magenic.masters.util.FileUtil;
+import com.magenic.masters.util.Parser;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -45,28 +44,30 @@ public class GroceryApp {
 
     private static final String ITEM_CART = """
             \nChoose item (-1 to go back to Categories):""";
-    
+
     private static final String ITEM_QTY = """
             Enter how many:""";
 
     private static final String ITEM_QTY_KG = "Enter how much(in kg):";
-    
+
     private static final String ITEM_FORMAT = "[%d]%-55s price: %s/%s";
     private static final String CART_ITEM_FORMAT = "%s | %s/%s x %s | %s";
-    private static final String FILE_DIR = "resources/";
-    private static final String FILENAME = "stocks.csv";
+    private static final String STOCKS_FILENAME = "stocks.csv";
+    private static final String ACCOUNTS_FILENAME = "accounts.csv";
 
     private Scanner scanner;
     private List<Item> itemsInCart;
     private List<Item> allItems;
     private List<Item> itemsInCategory;
+    private List<PaymentMethod> existingPaymentMethods;
     private NumberFormat priceFrmtter;
 
     private int totalItemsInCart;
     private double totalAmount;
 
-    public GroceryApp(List<Item> items) {
+    public GroceryApp(List<Item> items, List<PaymentMethod> existingPaymentMethods) {
         this.allItems = items;
+        this.existingPaymentMethods = existingPaymentMethods;
         this.scanner = new Scanner(System.in);
         this.itemsInCart = new ArrayList<>();
 
@@ -149,10 +150,10 @@ public class GroceryApp {
                             item.getUnit()));
                 });
 
-        displayCart();
+        displayOptionsForItems();
     }
-    
-    private void displayCart() {
+
+    private void displayOptionsForItems() {
         int choice = getValidIntInput(ITEM_CART);
         switch (choice) {
             case 0, 1, 2, 3, 4 -> addToCart(itemsInCategory.get(choice));
@@ -163,7 +164,7 @@ public class GroceryApp {
             }
         }
     }
-    
+
     private void addToCart(Item item) {
         double totalAmount;
         double quantity;
@@ -188,23 +189,23 @@ public class GroceryApp {
                 priceFrmtter.format(item.getPrice()),
                 item.getUnit(),
                 quantity,
-                totalAmount
+                priceFrmtter.format(totalAmount)
         ));
 
         displayCurrentCart(false);
     }
-    
+
     private void displayCurrentCart(boolean isCheckingOut) {
     	NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
 		fmt.setMinimumFractionDigits(3);
 
         String summary = """
-				Total amount: %s,
-				Total amount compact: %s,
+				Total amount: %s
+				Total amount compact: %s
 				Number of Items: %d
 				""";
 
-        System.out.println("Current cart contents:");
+        System.out.println("\nCurrent cart contents:");
         if (!isCheckingOut) {
             Map<String, Object> content = itemsInCart.stream().collect(Collectors.teeing(
                     Collectors.summingDouble(n -> n.getUnit().equals("kg") ? n.getTotalAmount() : n.getPrice()),
@@ -217,8 +218,9 @@ public class GroceryApp {
             totalItemsInCart = Integer.valueOf(String.valueOf(content.get("countAmount")));
             totalAmount = Double.valueOf(String.valueOf(content.get("totalAmount")));
 
-            String cartContent = summary.formatted(content.get("totalAmount"), fmt.format(content.get("totalAmount")), content.get("countAmount")).trim();
+            String cartContent = summary.formatted(priceFrmtter.format(content.get("totalAmount")), fmt.format(content.get("totalAmount")), content.get("countAmount")).trim();
             System.out.println(cartContent);
+            System.out.println("");
         }
 
         Map<Integer, Item> uniqueItems = new HashMap<>();
@@ -241,39 +243,62 @@ public class GroceryApp {
         }
 
         uniqueItems.values().forEach((var i) -> {
-            System.out.println(CART_ITEM_FORMAT.formatted(i.getName(), i.getPrice(), i.getUnit(), i.getTotalItemsInCart(), i.getTotalAmount()));
+            System.out.println(CART_ITEM_FORMAT.formatted(i.getName(), priceFrmtter.format(i.getPrice()),
+                    i.getUnit(), i.getTotalItemsInCart(), priceFrmtter.format(i.getTotalAmount())));
         });
 
         if (!isCheckingOut) {
-            displayCart();
+            displayOptionsForItems();
         }
     }
 
     private void displayAndSaveReceipt() {
-        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+        String message = """
+                
+                Payment Methods:
+                
+                Choose Payment Method:""";
+        //TODO: add existing methods.
+        int choice = getValidIntInput(message);
         switch (choice) {
-            case 1, 2 -> saveReceipt(new Bank());
-            case 3 -> saveReceipt(new CreditCard());
-            case 4 -> saveReceipt(new Gcash());
+            case 0, 1, 2, 3 -> saveReceipt(existingPaymentMethods.get(choice));
+            case 4 -> saveReceipt(new COD());
+            case 5 -> createNewPayment();
             default ->  displayAndSaveReceipt();
         };
     }
 
+    private void createNewPayment() {
+//        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+    }
+
     private void saveReceipt(PaymentMethod paymentMethod) {
-        String paymentDetails = paymentMethod.getPaymentDetails(totalAmount, totalItemsInCart);
+        String paymentDetails;
 
-        System.out.println("""
+        if (paymentMethod instanceof COD c && c.getAccountDetails() != null) {
+            System.out.println("""
+                
+                Thank you for shopping.
+                You have selected to pay by COD.
+                Please prepare amount below:""");
+        } else {
+            System.out.println("""
+                
                 Thank you for your payment.
-                Payment Details:
-                """);
-        System.out.print(paymentDetails.stripLeading());
-
-        Path filePath = Paths.get(FILE_DIR + paymentMethod.getFileName());
-        try {
-            Files.writeString(filePath, paymentDetails, StandardOpenOption.CREATE);
-        } catch (IOException e) {
-            e.printStackTrace();
+                Payment Details:""");
         }
+
+        switch (paymentMethod) {
+            case SavingsAccount s -> paymentDetails = s.getPaymentDetails(totalAmount, totalItemsInCart);
+            case CheckingAccount c -> paymentDetails = c.getPaymentDetails(totalAmount, totalItemsInCart);
+            case CreditCard cc -> paymentDetails = cc.getPaymentDetails(totalAmount, totalItemsInCart);
+            case Gcash g -> paymentDetails = g.getPaymentDetails(totalAmount, totalItemsInCart);
+            case COD cod -> paymentDetails = cod.getPaymentDetails(totalAmount, totalItemsInCart);
+            default -> paymentDetails = paymentMethod.getPaymentDetails(totalAmount, totalItemsInCart);
+        }
+
+        System.out.println(paymentDetails);
+        FileUtil.saveToFile(paymentDetails, paymentMethod.getFileName());
     }
 
     private void checkout() {
@@ -290,24 +315,50 @@ public class GroceryApp {
 
     public static void main(String[] args) {
 
+        Parser<String, Item> itemParser = (String s) -> {
+            String[] details = s.split(",");
+            return new Item(details[0], Double.valueOf(details[1]),
+                    details[2], Category.getByDescription(details[3]));
+        };
+
+        Parser<String, PaymentMethod> accountParser = (String s) -> {
+            String[] details = s.split(",");
+            PaymentMethod p = switch (details[0]) {
+                case "Savings": yield new SavingsAccount(details[1], details[2], details[3]);
+                case "Checking": yield new CheckingAccount(details[1], details[2], details[3]);
+                case "Credit card": yield new CreditCard();
+                case "Gcash": yield new Gcash(details[1], details[2], details[3]);
+                default: yield  null;
+            };
+
+            if (p instanceof CreditCard c) {
+                c.setAccountName(details[1]);
+                c.setAccountNumber(details[2]);
+                c.setAccountNickname(details[3]);
+                c.setExpiryDate(details[4]);
+            }
+            return p;
+        };
+
+
         List<Item> items = new ArrayList<>();
-        try {
-            Path filepath = Paths.get(FILE_DIR + FILENAME);
-            String content = Files.readString(filepath);
+        String stocks = FileUtil.readFile(STOCKS_FILENAME);
+        String accounts = FileUtil.readFile(ACCOUNTS_FILENAME);
 
-            AtomicInteger id = new AtomicInteger();
-            content.lines().filter(Predicate.not(String::isBlank)).forEach((var line) -> {
-                String[] details = line.split(",");
-                Item item = new Item(id.getAndIncrement(), details[0], Double.valueOf(details[1]), details[2], Category.getByDescription(details[3])); //validation?
-                items.add(item);
-            });
+        AtomicInteger id = new AtomicInteger();
+        stocks.lines().filter(Predicate.not(String::isBlank)).forEach((var line) -> {
+            Item item = itemParser.parse(line);
+            item.setId(id.getAndIncrement());
+            items.add(item);
+        });
 
-            GroceryApp app = new GroceryApp(items);
-            app.displayMainMenu();
+        List<PaymentMethod> existingPaymentMethods = new ArrayList<>();
+        accounts.lines().filter(Predicate.not(String::isBlank)).forEach((var line) -> {
+            existingPaymentMethods.add(accountParser.parse(line));
+        });
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        GroceryApp app = new GroceryApp(items, existingPaymentMethods);
+        app.displayMainMenu();
 
     }
 
