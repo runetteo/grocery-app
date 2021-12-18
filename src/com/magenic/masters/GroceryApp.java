@@ -33,11 +33,13 @@ public class GroceryApp {
                 Choose Category(-1 to Checkout, -2 to Exit):""";
 
     private static final String PAYMENT_OPTIONS_MENU = """
-                Choose payment method: 
+                Payment Method: 
                 1 - Savings
                 2 - Checking
                 3 - Credit Card
-                4 - GCASH 
+                4 - Gcash 
+                
+                Choose Payment Method:
                 """;
 
     private static final String ITEM_CART = """
@@ -193,10 +195,10 @@ public class GroceryApp {
     private void displayCurrentCart(boolean isCheckingOut) {
 
         String summary = """
-				Total amount: %s
-				Total amount compact: %s
-				Number of Items: %d				
-				""";
+                Total amount: %s
+                Total amount compact: %s
+                Number of Items: %d             
+                """;
 
         System.out.println("\nCurrent cart contents:");
         if (!isCheckingOut) {
@@ -251,10 +253,21 @@ public class GroceryApp {
         String message = """
                 
                 Payment Methods:
-                
+                %s
                 Choose Payment Method:""";
-        //TODO: add existing methods.
-        int choice = getValidIntInput(message);
+
+        StringBuilder sb = new StringBuilder();
+        String entryFormat = """
+                [%d]%s
+                """;
+        for(int x=0; x<existingPaymentMethods.size(); x++) {
+            sb.append(entryFormat.formatted(x, existingPaymentMethods.get(x).getAccountDetails()));
+        }
+        sb.append(entryFormat.formatted(4, "COD"));
+        sb.append("\n");
+        sb.append(entryFormat.formatted(5, "Pay with other account"));
+
+        int choice = getValidIntInput(message.formatted(sb.toString()));
         switch (choice) {
             case 0, 1, 2, 3 -> saveReceipt(existingPaymentMethods.get(choice));
             case 4 -> saveReceipt(new COD());
@@ -264,7 +277,50 @@ public class GroceryApp {
     }
 
     private void createNewPayment() {
-//        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+
+        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+        switch (choice) {
+            case 1 -> {
+                System.out.print("Enter Account Info\nAccount name:");
+                String accountName = scanner.next();
+
+                System.out.print("Account number:");
+                String accountNumber = scanner.next();
+
+                saveReceipt(new SavingsAccount(accountName, accountNumber));
+            }
+            case 2 -> {
+                System.out.print("Enter Account Info\nAccount name:");
+                String accountName = scanner.next();
+
+                System.out.print("Account number:");
+                String accountNumber = scanner.next();
+
+                saveReceipt(new CheckingAccount(accountName, accountNumber));
+            }
+            case 3 -> {
+                System.out.print("Enter Account Info\nName on card:");
+                String name = scanner.next();
+
+                System.out.print("Credit card number:");
+                String ccNumber = scanner.next();
+
+                System.out.print("Expiry date:");
+                String expiry = scanner.next();
+
+                saveReceipt(new CreditCard(name, ccNumber, expiry));
+            }
+            case 4 -> {
+                System.out.print("Enter Account Info\nSubscriber name:");
+                String name = scanner.next();
+
+                System.out.print("Mobile number:");
+                String number = scanner.next();
+
+                saveReceipt(new Gcash(name, number, "NA"));
+            }
+            default -> createNewPayment();
+        }
     }
 
     private void saveReceipt(PaymentMethod paymentMethod) {
@@ -323,9 +379,8 @@ public class GroceryApp {
                 case "Checking": yield new CheckingAccount(details[1], details[2], details[3]);
                 case "Credit card": yield new CreditCard(details[1], details[2], details[3], details[4]);
                 case "Gcash": yield new Gcash(details[1], details[2], details[3]);
-                default: yield  null;
+                default: yield null;
             };
-
         };
 
 
