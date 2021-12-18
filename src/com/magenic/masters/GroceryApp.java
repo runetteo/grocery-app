@@ -11,10 +11,10 @@ import com.magenic.masters.payment.SavingsAccount;
 import com.magenic.masters.util.Constants;
 import com.magenic.masters.util.FileUtil;
 import com.magenic.masters.util.Parser;
+import com.magenic.masters.util.ScannerUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -49,13 +49,12 @@ public class GroceryApp {
             Enter how many:""";
 
     private static final String ITEM_QTY_KG = "Enter how much(in kg):";
-
     private static final String ITEM_FORMAT = "[%d]%-55s price: %s/%s";
     private static final String CART_ITEM_FORMAT = "%s | %s/%s x %s | %s";
     private static final String STOCKS_FILENAME = "stocks.csv";
     private static final String ACCOUNTS_FILENAME = "accounts.csv";
 
-    private Scanner scanner;
+    private ScannerUtil scannerUtil;
     private List<Item> itemsInCart;
     private List<Item> allItems;
     private List<Item> itemsInCategory;
@@ -67,46 +66,12 @@ public class GroceryApp {
     public GroceryApp(List<Item> items, List<PaymentMethod> existingPaymentMethods) {
         this.allItems = items;
         this.existingPaymentMethods = existingPaymentMethods;
-        this.scanner = new Scanner(System.in);
+        this.scannerUtil = new ScannerUtil();
         this.itemsInCart = new ArrayList<>();
     }
 
-    private int getValidIntInput(String message) {
-        int userInput = 0;
-        boolean isValid = false;
-        do {
-            try {
-                System.out.print(message);
-                userInput = scanner.nextInt();
-                isValid = true;
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
-            }
-            scanner.nextLine();
-        } while (!isValid);
-
-        return userInput;
-    }
-
-    private double getValidDoubleInput(String message) {
-        double userInput = 0;
-        boolean isValid = false;
-        do {
-            try {
-                System.out.print(message);
-                userInput = scanner.nextDouble();
-                isValid = true;
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
-            }
-            scanner.nextLine();
-        } while (!isValid);
-
-        return userInput;
-    }
-
     private void displayMainMenu() {
-        int choice = getValidIntInput(MAIN_MENU);
+        int choice = scannerUtil.getValidIntInput(MAIN_MENU);
         switch (choice) {
             case 1 -> {
                 System.out.println("\nPantry Items:");
@@ -136,7 +101,7 @@ public class GroceryApp {
         AtomicInteger id = new AtomicInteger();
         itemsInCategory =  allItems.stream()
                 .filter(item -> item.getCategory() == category)
-                .collect(Collectors.toList());
+                .toList();
 
         itemsInCategory.stream()
                 .forEach(item -> {
@@ -151,7 +116,7 @@ public class GroceryApp {
     }
 
     private void displayOptionsForItems() {
-        int choice = getValidIntInput(ITEM_CART);
+        int choice = scannerUtil.getValidIntInput(ITEM_CART);
         switch (choice) {
             case 0, 1, 2, 3, 4 -> addToCart(itemsInCategory.get(choice));
             case -1 -> displayMainMenu();
@@ -164,30 +129,32 @@ public class GroceryApp {
 
     private void addToCart(Item item) {
         double totalAmount;
-        double quantity;
+        double quantity = scannerUtil.getValidDoubleInput(item.getUnit().equals("kg") ? ITEM_QTY_KG : ITEM_QTY);
 
-        if (!item.getUnit().equals("kg")) {
-            quantity = getValidIntInput(ITEM_QTY);
-            totalAmount = quantity * item.getPrice();
-            for (int i=0; i<quantity; i++) {
+        if (quantity > 0) {
+            if (!item.getUnit().equals("kg")) {
+                totalAmount = quantity * item.getPrice();
+                for (int i=0; i<quantity; i++) {
+                    itemsInCart.add(item);
+                }
+            } else {
+                totalAmount = quantity * item.getPrice();
+                item.setTotalItemsInCart(quantity);
+                item.setTotalAmount(totalAmount);
                 itemsInCart.add(item);
             }
-        } else {
-            quantity = getValidDoubleInput(ITEM_QTY_KG);
-            totalAmount = quantity * item.getPrice();
-            item.setTotalItemsInCart(quantity);
-            item.setTotalAmount(totalAmount);
-            itemsInCart.add(item);
-        }
 
-        System.out.print("\nItem added: ");
-        System.out.println(CART_ITEM_FORMAT.formatted(
-                item.getName(),
-                Constants.PRICE_FORMATTER.format(item.getPrice()),
-                item.getUnit(),
-                quantity,
-                Constants.PRICE_FORMATTER.format(totalAmount)
-        ));
+            System.out.print("\nItem added: ");
+            System.out.println(CART_ITEM_FORMAT.formatted(
+                    item.getName(),
+                    Constants.PRICE_FORMATTER.format(item.getPrice()),
+                    item.getUnit(),
+                    quantity,
+                    Constants.PRICE_FORMATTER.format(totalAmount)
+            ));
+        } else {
+            System.out.println("Quantity selected was 0. Nothing was added.");
+        }
 
         displayCurrentCart(false);
     }
@@ -267,7 +234,7 @@ public class GroceryApp {
         sb.append("\n");
         sb.append(entryFormat.formatted(5, "Pay with other account"));
 
-        int choice = getValidIntInput(message.formatted(sb.toString()));
+        int choice = scannerUtil.getValidIntInput(message.formatted(sb.toString()));
         switch (choice) {
             case 0, 1, 2, 3 -> saveReceipt(existingPaymentMethods.get(choice));
             case 4 -> saveReceipt(new COD());
@@ -278,44 +245,34 @@ public class GroceryApp {
 
     private void createNewPayment() {
 
-        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+        int choice = scannerUtil.getValidIntInput(PAYMENT_OPTIONS_MENU);
         switch (choice) {
             case 1 -> {
-                System.out.print("Enter Account Info\nAccount name:");
-                String accountName = scanner.next();
-
-                System.out.print("Account number:");
-                String accountNumber = scanner.next();
+                System.out.println("Enter Account Info");
+                String accountName = scannerUtil.getValidStringInput("Account name:");
+                String accountNumber = scannerUtil.getValidStringInput("Account number:");
 
                 saveReceipt(new SavingsAccount(accountName, accountNumber));
             }
             case 2 -> {
-                System.out.print("Enter Account Info\nAccount name:");
-                String accountName = scanner.next();
-
-                System.out.print("Account number:");
-                String accountNumber = scanner.next();
+                System.out.println("Enter Account Info");
+                String accountName = scannerUtil.getValidStringInput("Account name:");
+                String accountNumber = scannerUtil.getValidStringInput("Account number:");
 
                 saveReceipt(new CheckingAccount(accountName, accountNumber));
             }
             case 3 -> {
-                System.out.print("Enter Account Info\nName on card:");
-                String name = scanner.next();
-
-                System.out.print("Credit card number:");
-                String ccNumber = scanner.next();
-
-                System.out.print("Expiry date:");
-                String expiry = scanner.next();
+                System.out.println("Enter Account Info");
+                String name = scannerUtil.getValidStringInput("Name on card:");
+                String ccNumber = scannerUtil.getValidStringInput("Credit card number:");
+                String expiry = scannerUtil.getValidStringInput("Expiry date:");
 
                 saveReceipt(new CreditCard(name, ccNumber, expiry));
             }
             case 4 -> {
-                System.out.print("Enter Account Info\nSubscriber name:");
-                String name = scanner.next();
-
-                System.out.print("Mobile number:");
-                String number = scanner.next();
+                System.out.println("Enter Account Info");
+                String name = scannerUtil.getValidStringInput("Subscriber name:");
+                String number = scannerUtil.getValidStringInput("Mobile number:");
 
                 saveReceipt(new Gcash(name, number, "NA"));
             }
