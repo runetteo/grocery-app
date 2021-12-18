@@ -8,6 +8,7 @@ import com.magenic.masters.payment.CreditCard;
 import com.magenic.masters.payment.Gcash;
 import com.magenic.masters.payment.PaymentMethod;
 import com.magenic.masters.payment.SavingsAccount;
+import com.magenic.masters.util.Constants;
 import com.magenic.masters.util.FileUtil;
 import com.magenic.masters.util.Parser;
 
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -196,13 +196,11 @@ public class GroceryApp {
     }
 
     private void displayCurrentCart(boolean isCheckingOut) {
-    	NumberFormat fmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-		fmt.setMinimumFractionDigits(3);
 
         String summary = """
 				Total amount: %s
 				Total amount compact: %s
-				Number of Items: %d
+				Number of Items: %d				
 				""";
 
         System.out.println("\nCurrent cart contents:");
@@ -218,9 +216,11 @@ public class GroceryApp {
             totalItemsInCart = Integer.valueOf(String.valueOf(content.get("countAmount")));
             totalAmount = Double.valueOf(String.valueOf(content.get("totalAmount")));
 
-            String cartContent = summary.formatted(priceFrmtter.format(content.get("totalAmount")), fmt.format(content.get("totalAmount")), content.get("countAmount")).trim();
+            String cartContent = summary.formatted(
+                    Constants.priceFrmtter.format(content.get("totalAmount")),
+                    Constants.compactNumFmt.format(content.get("totalAmount")),
+                    content.get("countAmount"));
             System.out.println(cartContent);
-            System.out.println("");
         }
 
         Map<Integer, Item> uniqueItems = new HashMap<>();
