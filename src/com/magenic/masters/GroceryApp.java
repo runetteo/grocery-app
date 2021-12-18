@@ -323,21 +323,14 @@ public class GroceryApp {
 
         Parser<String, PaymentMethod> accountParser = (String s) -> {
             String[] details = s.split(",");
-            PaymentMethod p = switch (details[0]) {
+            return switch (details[0]) {
                 case "Savings": yield new SavingsAccount(details[1], details[2], details[3]);
                 case "Checking": yield new CheckingAccount(details[1], details[2], details[3]);
-                case "Credit card": yield new CreditCard();
+                case "Credit card": yield new CreditCard(details[1], details[2], details[3], details[4]);
                 case "Gcash": yield new Gcash(details[1], details[2], details[3]);
                 default: yield  null;
             };
 
-            if (p instanceof CreditCard c) {
-                c.setAccountName(details[1]);
-                c.setAccountNumber(details[2]);
-                c.setAccountNickname(details[3]);
-                c.setExpiryDate(details[4]);
-            }
-            return p;
         };
 
 

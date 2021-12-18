@@ -7,19 +7,14 @@ public final class CreditCard implements PaymentMethod {
     private String accountNickname;
     private String expiryDate;
 
-    public void setAccountName(String accountName) {
+    public CreditCard(String accountName, String accountNumber, String expiryDate) {
+        this(accountName, accountNumber, "NA", expiryDate);
+    }
+
+    public CreditCard(String accountName, String accountNumber, String accountNickname, String expiryDate) {
         this.accountName = accountName;
-    }
-
-    public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
-    }
-
-    public void setAccountNickname(String accountNickname) {
         this.accountNickname = accountNickname;
-    }
-
-    public void setExpiryDate(String expiryDate) {
         this.expiryDate = expiryDate;
     }
 
