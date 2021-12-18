@@ -6,12 +6,12 @@ import java.util.Locale;
 
 public final class Constants {
 
-    public static final NumberFormat compactNumFmt;
-    public static final NumberFormat priceFrmtter = new DecimalFormat("#0.00");
+    public static final NumberFormat COMPACT_PRICE_FORMATTER;
+    public static final NumberFormat PRICE_FORMATTER = new DecimalFormat("#0.00");
 
     static {
-        compactNumFmt = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
-        compactNumFmt.setMinimumFractionDigits(3);
+        COMPACT_PRICE_FORMATTER = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
+        COMPACT_PRICE_FORMATTER.setMinimumFractionDigits(3);
     }
 
 }

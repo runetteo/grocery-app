@@ -12,8 +12,6 @@ import com.magenic.masters.util.Constants;
 import com.magenic.masters.util.FileUtil;
 import com.magenic.masters.util.Parser;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -60,7 +58,6 @@ public class GroceryApp {
     private List<Item> allItems;
     private List<Item> itemsInCategory;
     private List<PaymentMethod> existingPaymentMethods;
-    private NumberFormat priceFrmtter;
 
     private int totalItemsInCart;
     private double totalAmount;
@@ -70,8 +67,6 @@ public class GroceryApp {
         this.existingPaymentMethods = existingPaymentMethods;
         this.scanner = new Scanner(System.in);
         this.itemsInCart = new ArrayList<>();
-
-        this.priceFrmtter = new DecimalFormat("#0.00");
     }
 
     private int getValidIntInput(String message) {
@@ -146,7 +141,7 @@ public class GroceryApp {
                     System.out.println(ITEM_FORMAT.formatted(
                             id.getAndIncrement(),
                             item.getName(),
-                            priceFrmtter.format(item.getPrice()),
+                            Constants.PRICE_FORMATTER.format(item.getPrice()),
                             item.getUnit()));
                 });
 
@@ -186,10 +181,10 @@ public class GroceryApp {
         System.out.print("\nItem added: ");
         System.out.println(CART_ITEM_FORMAT.formatted(
                 item.getName(),
-                priceFrmtter.format(item.getPrice()),
+                Constants.PRICE_FORMATTER.format(item.getPrice()),
                 item.getUnit(),
                 quantity,
-                priceFrmtter.format(totalAmount)
+                Constants.PRICE_FORMATTER.format(totalAmount)
         ));
 
         displayCurrentCart(false);
@@ -217,8 +212,8 @@ public class GroceryApp {
             totalAmount = Double.valueOf(String.valueOf(content.get("totalAmount")));
 
             String cartContent = summary.formatted(
-                    Constants.priceFrmtter.format(content.get("totalAmount")),
-                    Constants.compactNumFmt.format(content.get("totalAmount")),
+                    Constants.PRICE_FORMATTER.format(content.get("totalAmount")),
+                    Constants.COMPACT_PRICE_FORMATTER.format(content.get("totalAmount")),
                     content.get("countAmount"));
             System.out.println(cartContent);
         }
@@ -243,8 +238,8 @@ public class GroceryApp {
         }
 
         uniqueItems.values().forEach((var i) -> {
-            System.out.println(CART_ITEM_FORMAT.formatted(i.getName(), priceFrmtter.format(i.getPrice()),
-                    i.getUnit(), i.getTotalItemsInCart(), priceFrmtter.format(i.getTotalAmount())));
+            System.out.println(CART_ITEM_FORMAT.formatted(i.getName(), Constants.PRICE_FORMATTER.format(i.getPrice()),
+                    i.getUnit(), i.getTotalItemsInCart(), Constants.PRICE_FORMATTER.format(i.getTotalAmount())));
         });
 
         if (!isCheckingOut) {

@@ -17,7 +17,7 @@ public sealed interface PaymentMethod permits Bank, CreditCard, Gcash, COD {
 
 		return paymentDetails.formatted(
 				getAccountDetails().stripIndent(),
-				Constants.priceFrmtter.format(totalAmount), Constants.compactNumFmt.format(totalAmount), totalItemsInCart);
+				Constants.PRICE_FORMATTER.format(totalAmount), Constants.COMPACT_PRICE_FORMATTER.format(totalAmount), totalItemsInCart);
 	}
 }
 
