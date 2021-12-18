@@ -9,12 +9,12 @@ public record Gcash(String subscriberName, String mobileNumber, String accountNi
 
     @Override
     public String getAccountDetails() {
-    	String accountDetails = """
+        String accountDetails = """
                 Account nickname:\s%s
-				Subscriber name:\s%s
-				Mobile number:\s%s
-				Account type:\sGcash
-				""";
+                Subscriber name:\s%s
+                Mobile number:\s%s
+                Account type:\sGcash
+                """;
         return accountDetails.formatted(accountNickname == null ? "NA" : accountNickname, subscriberName, mobileNumber);
     }
 }
