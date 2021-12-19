@@ -11,6 +11,7 @@ import com.magenic.masters.payment.SavingsAccount;
 import com.magenic.masters.util.Constants;
 import com.magenic.masters.util.FileUtil;
 import com.magenic.masters.util.Parser;
+import com.magenic.masters.util.PaymentParserUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,6 +85,27 @@ public class GroceryApp {
         } while (!isValid);
 
         return userInput;
+    }
+
+
+    private static String getPaymentMethodString(List<PaymentMethod> paymentMethods) {
+        List<String> paymentMethodString = new ArrayList<>();
+        paymentMethods.forEach(paymentMethod -> {
+            if (paymentMethod instanceof SavingsAccount account) {
+                paymentMethodString.add("[0]" + account.getAccountDetails());
+            } else if (paymentMethod instanceof CheckingAccount account) {
+                paymentMethodString.add("[1]" + account.getAccountDetails());
+            } else if (paymentMethod instanceof CreditCard account) {
+                paymentMethodString.add("[2]" + account.getAccountDetails());
+            } else if (paymentMethod instanceof Gcash account) {
+                paymentMethodString.add("[3]" + account.getAccountDetails());
+            }
+        });
+
+        paymentMethodString.add("[4] COD \n");
+        paymentMethodString.add("[5] Pay with other account \n");
+
+        return paymentMethodString.stream().collect(Collectors.joining("\n"));
     }
 
     private double getValidDoubleInput(String message) {
@@ -252,19 +274,29 @@ public class GroceryApp {
                 
                 Payment Methods:
                 
+                %s
+                
                 Choose Payment Method:""";
         //TODO: add existing methods.
-        int choice = getValidIntInput(message);
+       int choice = getValidIntInput(message.formatted(getPaymentMethodString(existingPaymentMethods)));
         switch (choice) {
             case 0, 1, 2, 3 -> saveReceipt(existingPaymentMethods.get(choice));
             case 4 -> saveReceipt(new COD());
-            case 5 -> createNewPayment();
+            case 5 -> saveReceipt(createNewPayment());
             default ->  displayAndSaveReceipt();
         };
     }
 
-    private void createNewPayment() {
-//        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+    private PaymentMethod createNewPayment() {
+        int choice = getValidIntInput(PAYMENT_OPTIONS_MENU);
+        System.out.print("Enter Account Info \n");
+        return switch (choice) {
+             case 1, 2 : yield PaymentParserUtil.parseNewBankAccount(choice);
+             case 3 : yield PaymentParserUtil.parseNewCreditCard();
+             case 4 : yield PaymentParserUtil.parseNewGcashAccount();
+             default :  yield createNewPayment();
+        };
+
     }
 
     private void saveReceipt(PaymentMethod paymentMethod) {

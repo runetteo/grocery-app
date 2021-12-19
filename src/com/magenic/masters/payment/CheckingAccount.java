@@ -9,4 +9,8 @@ public final class CheckingAccount extends Bank {
         super(accountName, accountNumber, accountNickname);
     }
 
+    public CheckingAccount(String accountName, String accountNumber, String accountNickname, String bankName) {
+        super(accountName, accountNumber, accountNickname, bankName);
+    }
+
 }

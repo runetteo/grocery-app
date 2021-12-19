@@ -8,4 +8,8 @@ public final class SavingsAccount extends Bank {
     public SavingsAccount(String accountName, String accountNumber, String accountNickname) {
         super(accountName, accountNumber, accountNickname);
     }
+
+    public SavingsAccount(String accountName, String accountNumber, String accountNickname, String bankName) {
+        super(accountName, accountNumber, accountNickname, bankName);
+    }
 }
