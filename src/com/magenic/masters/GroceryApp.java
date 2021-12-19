@@ -34,7 +34,7 @@ public class GroceryApp {
                 Choose Category(-1 to Checkout, -2 to Exit):""";
 
     private static final String PAYMENT_OPTIONS_MENU = """
-                Choose payment method: 
+               \nPayment Method: 
                 1 - Savings
                 2 - Checking
                 3 - Credit Card
