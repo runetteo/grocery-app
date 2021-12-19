@@ -8,54 +8,48 @@ public final class PaymentParserUtil {
     public static Scanner scanner = new Scanner(System.in);
 
     public static Gcash parseNewGcashAccount() {
-        String subscriber = "";
-        String mobileNumber = "";
 
-        System.out.print("Subscriber name: \n");
-        subscriber = scanner.nextLine();
-
-        System.out.print("Mobile number: \n");
-        mobileNumber = scanner.nextLine();
+        String subscriber = getValidStringInput("Subscriber name: ");
+        String mobileNumber = getValidStringInput("Mobile number: ");
 
 
         return new Gcash(subscriber, mobileNumber, null);
     }
 
     public static  CreditCard parseNewCreditCard() {
-        String nameOnCard = "";
-        String ccNumber = "";
-        String expiryDate = "";
 
-        System.out.print("Name on card: \n");
-        nameOnCard = scanner.nextLine();
-
-        System.out.print("Credit card number: \n");
-        ccNumber = scanner.nextLine();
-
-        System.out.print("Expiry date: \n");
-        expiryDate = scanner.nextLine();
+        String nameOnCard = getValidStringInput("Name on card: ");
+        String ccNumber = getValidStringInput("Credit card number: ");
+        String expiryDate = getValidStringInput("Expiry date: ");
 
         return new CreditCard(nameOnCard, ccNumber, expiryDate);
     }
 
     public static  PaymentMethod parseNewBankAccount(int option) {
-        String accountName = "";
-        String accountNumber = "";
-        String bankName = "";
 
-        System.out.print("Account Name: \n");
-        accountName = scanner.nextLine();
-
-        System.out.print("Account Number: \n");
-        accountNumber = scanner.nextLine();
-
-        System.out.print("Bank Name: \n");
-        bankName = scanner.nextLine();
+        String accountName = getValidStringInput("Account Name: ");
+        String accountNumber = getValidStringInput("Account Number: ");
+        String bankName = getValidStringInput("Bank Name: ");
 
 
         if(option == 1) return new SavingsAccount(accountName, accountNumber, "NA", bankName);
 
         else return new CheckingAccount(accountName, accountNumber, "NA", bankName);
+    }
+
+    private static String getValidStringInput(String message) {
+        String input = "";
+        boolean isInvalid = true;
+        do {
+            System.out.print(message);
+            input = scanner.nextLine();
+            isInvalid = input.strip().isBlank();
+
+            if (isInvalid) {
+                System.out.println("Invalid input. Account info cannot have blank values.");
+            }
+        } while (isInvalid);
+        return input;
     }
 
 }

@@ -39,7 +39,8 @@ public class GroceryApp {
                 2 - Checking
                 3 - Credit Card
                 4 - GCASH 
-                """;
+                
+                Choose Payment Method:""";
 
     private static final String ITEM_CART = """
             \nChoose item (-1 to go back to Categories):""";
@@ -184,30 +185,32 @@ public class GroceryApp {
 
     private void addToCart(Item item) {
         double totalAmount;
-        double quantity;
+        double quantity = getValidDoubleInput(item.getUnit().equals("kg") ? ITEM_QTY_KG : ITEM_QTY);
 
-        if (!item.getUnit().equals("kg")) {
-            quantity = getValidIntInput(ITEM_QTY);
-            totalAmount = quantity * item.getPrice();
-            for (int i=0; i<quantity; i++) {
+        if (quantity > 0) {
+            if (!item.getUnit().equals("kg")) {
+                totalAmount = quantity * item.getPrice();
+                for (int i=0; i<quantity; i++) {
+                    itemsInCart.add(item);
+                }
+            } else {
+                totalAmount = quantity * item.getPrice();
+                item.setTotalItemsInCart(quantity);
+                item.setTotalAmount(totalAmount);
                 itemsInCart.add(item);
             }
-        } else {
-            quantity = getValidDoubleInput(ITEM_QTY_KG);
-            totalAmount = quantity * item.getPrice();
-            item.setTotalItemsInCart(quantity);
-            item.setTotalAmount(totalAmount);
-            itemsInCart.add(item);
-        }
 
-        System.out.print("\nItem added: ");
-        System.out.println(CART_ITEM_FORMAT.formatted(
-                item.getName(),
-                Constants.PRICE_FORMATTER.format(item.getPrice()),
-                item.getUnit(),
-                quantity,
-                Constants.PRICE_FORMATTER.format(totalAmount)
-        ));
+            System.out.print("\nItem added: ");
+            System.out.println(CART_ITEM_FORMAT.formatted(
+                    item.getName(),
+                    Constants.PRICE_FORMATTER.format(item.getPrice()),
+                    item.getUnit(),
+                    quantity,
+                    Constants.PRICE_FORMATTER.format(totalAmount)
+            ));
+        } else {
+            System.out.println("Quantity selected was 0. Nothing was added.");
+        }
 
         displayCurrentCart(false);
     }
@@ -277,7 +280,6 @@ public class GroceryApp {
                 %s
                 
                 Choose Payment Method:""";
-        //TODO: add existing methods.
        int choice = getValidIntInput(message.formatted(getPaymentMethodString(existingPaymentMethods)));
         switch (choice) {
             case 0, 1, 2, 3 -> saveReceipt(existingPaymentMethods.get(choice));
